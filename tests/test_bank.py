@@ -3,18 +3,22 @@ import unittest
 
 from src.bank import BankAccount
 
+# $env:PYTHONPATH = "."; python .\testS\test_suites.py
+# python -m unittest tests.test_calculator.CalculatorTests.test_sum
+# python -m unittest discover tests
+
 
 class BankAccountTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.account = BankAccount(initial_balance=1000)
-        
+
     def tearDown(self) -> None:
         if os.path.exists(self.account.log_file):
             os.remove(self.account.log_file)
-            
+
     def _count_lines(self, file_path):
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             return sum(1 for line in file)
 
     def test_initial_balance(self):

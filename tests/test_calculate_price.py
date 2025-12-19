@@ -1,4 +1,4 @@
-from calculate_price import calculate_price
+from src import calculate_price
 
 def test_calculate_price_with_one_item():
     expected = 5.0
