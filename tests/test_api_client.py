@@ -1,8 +1,7 @@
 from src.api_client import get_location
 import unittest
 import requests
-import json
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 
 class ApiClientTests(unittest.TestCase):
@@ -18,11 +17,32 @@ class ApiClientTests(unittest.TestCase):
         mock_get.return_value.json.return_value = {"countryName": "Colombia"}
         location = get_location("8.8.8.8")
         self.assertNotEqual(location.get("country"), "Usa")
-        
+
         mock_get.assert_called_once_with("https://freeipapi.com/api/json/8.8.8.8")
 
+    @patch("src.api_client.requests.get")
+    def test_get_location_returns_side_effect(self, mock_get):
+        mock_get.side_effect = [
+            requests.exceptions.RequestException("Service Unavailable"),
+            Mock(
+                status_code=200,
+                json=lambda: {
+                    "countryName": "USA",
+                    "regionName": "FLORIDA",
+                    "cityName": "MIAMI",
+                },
+            ),
+        ]
 
-    @patch('src.api_client.requests.get')
+        with self.assertRaises(requests.exceptions.RequestException):
+            get_location("8.8.8.8")
+
+        result = get_location("8.8.8.8")
+        self.assertEqual(result["country"], "USA")
+        self.assertEqual(result["region"], "FLORIDA")
+        self.assertEqual(result["city"], "MIAMI")
+
+    @patch("src.api_client.requests.get")
     def test_get_location_returns_full_data(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
@@ -33,7 +53,7 @@ class ApiClientTests(unittest.TestCase):
             "cityName": "MIAMI",
             "latitude": 25.7617,
             "longitude": -80.1918,
-            "timeZone": "America/New_York"
+            "timeZone": "America/New_York",
         }
 
         result = get_location("8.8.8.8")

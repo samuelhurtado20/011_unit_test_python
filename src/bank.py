@@ -1,3 +1,19 @@
+from datetime import datetime
+
+# coverage run --rcfile=.coveragerc -m unittest discover
+# coverage report -m
+# uv add coverage
+# uv run coverage report -m
+# uv run coverage html
+
+class WithdrawalTimeRestrictionError(Exception):
+    pass
+
+
+class InsufficientFundsError(Exception):
+    pass
+
+
 class BankAccount:
     def __init__(self, initial_balance=0):
         self.balance = initial_balance
@@ -20,15 +36,26 @@ class BankAccount:
         return self.balance
 
     def withdraw(self, amount):
+        now = datetime.now()
+        if now.weekday() >= 5:  # 5 = sábado, 6 = domingo
+            raise WithdrawalTimeRestrictionError(
+                "Withdrawals are not allowed on weekends"
+            )
+        if now.hour < 8 or now.hour > 17:
+            raise WithdrawalTimeRestrictionError(
+                "Withdrawals are only allowed between 8 AM and 5 PM"
+            )
         if amount > self.balance:
-            self._log_transaction(f"Failed to withdraw {amount}")
-            raise ValueError("Insufficient funds")
+            raise InsufficientFundsError(
+                f"Withdrawal of {amount} exceeds available balance of {self.balance}"
+            )
+        # if amount > self.balance:
+        #     raise ValueError("Insufficient funds")
         elif amount <= 0:
-            self._log_transaction(f"Failed to withdraw {amount}")
             raise ValueError("Withdrawal amount must be positive")
         else:
             self.balance -= amount
-        self._log_transaction(f"Withdrew {amount}")
+            self._log_transaction(f"Withdrew: {amount}. New balance: {self.balance}")
         return self.balance
 
     def get_balance(self):
